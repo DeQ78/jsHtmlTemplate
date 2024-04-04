@@ -35,19 +35,21 @@ export default class Application {
 
     createComponent() {
         console.log('start', 'createComponent')
-
         console.log('this.template', this.template);
 
-        // {$msg}                       - static text from variable
-        // {$:cntSw1}                   - dynamic text from variable
-        // {@keydown="functionName()"}>      - event => function
-        // {@keydown="functionName(2)"}    - event => function with arguments
-        // <:baner cntSw1="{$:cntSw1}" cntSw2="{$:cntSw2}" msg="{$msg}" />  - component with attributes
+        // (?=(<:))([^\s]+)(.+)(?=\/>)\/>
+        // (?={(\$)((:)?))([^}]+)(?=})}
+        // (?=({))({)((.+)\((.*)\))(?=})}
+        // (?={(@))([^=]+)="([^"]+)"(?=})}
 
-        // 
-        // (?=(<:))([^\s]+)(.+)(?=\/>)\/>|(?={(\$)((:)?))([^}]+)(?=})}|(?=({))({)((.+)\((.*)\))(?=})}|(?={(@))([^=]+)="([^"]+)"(?=})}
+        const regexpTpl = [
+            '(?=(<:))([^\\s]+)(.+)(?=\\/>)\\/>', // component
+            '(?={(\\$)((:)?))([^}]+)(?=})}', // variable (static or observed value)
+            '(?=({))({)((.+)\\((.*)\\))(?=})}', // call component method
+            '(?={(@))([^=]+)="([^"]+)"(?=})}' // event of html element
+        ]
 
-        const regexp = new RegExp('((?=\\${|{@).+?(?=})})|((?=<:[^\\s]+)<:([^\\s]+)(.+?)(?=\\/>)\\/>)', 'mg');
+        const regexp = new RegExp(regexpTpl.join('|'), 'g');
 
         let match;
 
