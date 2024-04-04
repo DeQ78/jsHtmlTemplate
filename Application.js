@@ -38,11 +38,14 @@ export default class Application {
 
         console.log('this.template', this.template);
 
-        // ${msg}                       - static text from variable
-        // ${:cntSw1}                   - dynamic text from variable
-        // {@keydown="toggleSw1"}>      - event => function
-        // {@keydown="toggleSw2(2)"}    - event => function with arguments
-        // <:baner cntSw1="{:cntSw1}" cntSw2="{:cntSw2}" msg="${msg}" />  - component with attributes
+        // {$msg}                       - static text from variable
+        // {$:cntSw1}                   - dynamic text from variable
+        // {@keydown="functionName()"}>      - event => function
+        // {@keydown="functionName(2)"}    - event => function with arguments
+        // <:baner cntSw1="{$:cntSw1}" cntSw2="{$:cntSw2}" msg="{$msg}" />  - component with attributes
+
+        // 
+        // (?=(<:))([^\s]+)(.+)(?=\/>)\/>|(?={(\$)((:)?))([^}]+)(?=})}|(?=({))({)((.+)\((.*)\))(?=})}|(?={(@))([^=]+)="([^"]+)"(?=})}
 
         const regexp = new RegExp('((?=\\${|{@).+?(?=})})|((?=<:[^\\s]+)<:([^\\s]+)(.+?)(?=\\/>)\\/>)', 'mg');
 
