@@ -1,6 +1,9 @@
 export default class Application {
-    parentNode = null;
+    componentId = 0;
+
+    parentHtmlEl = null;
     parentComponent = null;
+
     config = {
         "componentName": ''
     };
@@ -12,25 +15,25 @@ export default class Application {
     components = {};
     attributes = {};
 
-    constructor(parentNode, parentComponent) {
+    constructor(parentHtmlEl, parentComponent) {
         console.log('start', 'constructor')
         if (this.constructor == Application) {
             throw new Error("Application is abstract classes and can't be instantiated.")
         }
         this.config.componentName = this.constructor.name
 
-        this.htmlNode = parentNode
+        this.parentHtmlEl = parentHtmlEl
         this.parentComponent = parentComponent
 
         console.log('end', 'constructor')
     }
 
-    run() {
-        console.log('start', 'run');
+    initiate() {
+        console.log('start', 'initiate');
         this.beforeCreate();
         this.createComponent();
         this.afterCreate();
-        console.log('end', 'run');
+        console.log('end', 'initiate');
     }
 
     createComponent() {
@@ -48,10 +51,14 @@ export default class Application {
         let match;
 
         let prevEnd = -1;
-        let lv = 0;
+
+        let parentEl = null;
+        let parentEls = [];
         let curentEl = this._virTpl;
-        let nodeText;
-        let nodes = [];
+        let nTxtEl;
+
+
+        // nodes.push(curentEl);
         while ((match = regexpHtmlNode.exec(this.template)) !== null) {
             console.log('-----------------------------------------');
             console.log(`prevEnd = ${prevEnd}`);
@@ -59,8 +66,8 @@ export default class Application {
 
             if (prevEnd > -1 && prevEnd < match.index) {
                 console.log('text before find', this.template.substring(prevEnd, match.index));
-                nodeText = document.createTextNode(this.template.substring(prevEnd, match.index));
-                curentEl.appendChild(nodeText);
+                nTxtEl = document.createTextNode(this.template.substring(prevEnd, match.index));
+                curentEl.appendChild(nTxtEl);
             }
 
             prevEnd = regexpHtmlNode.lastIndex;
@@ -71,23 +78,23 @@ export default class Application {
             } else if (match[5] == '/>') {
                 console.log('selfclose tag', '\t', nodeName[0])
             } else if (match[5] == '>' && match[2] == '/') {
-                console.log('close tag', '\t', nodeName[0])
+                console.log('close tag', '\t', nodeName[0]);
+                curentEl = parentEls.pop();
+                parentEl = null;
             } else if (match[5] == '>' && match[2] == '') {
                 console.log('open tag', '\t', nodeName[0]);
-                // document.createElement("div")
+                parentEl = curentEl;
+                parentEls.push(curentEl);
+                curentEl = document.createElement(nodeName[0]);
+                parentEl.appendChild(curentEl);
             } else {
                 console.log(match);
             }
-            // const newDiv = document.createElement("div");
-            // let txt = document.createTextNode(this.template);
-            // this._virTpl.appendChild(txt);
-
-            // _str
-
-
         }
 
         console.log('-----------------------------------------');
+        console.log(this._virTpl);
+
 
 
         /*
