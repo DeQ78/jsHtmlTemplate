@@ -38,15 +38,59 @@ export default class Application {
         console.log(this.template);
 
         const regexpTpl = [
-            '(?=(<:))([^\\s]+)(.+?)(?=\\/>)\\/>', // component
-            '(?={(\\$)((:)?))([^}]+)(?=})}', // variable (static or observed value)
-            '(?={(@))([^=]+)="([^"]+)"(?=})}', // event of html element
-            '(?=({))({)((.+?)\\((.*?)\\))(?=})}', // call component method
+            '(?=(<:))([^\\s]+)(.+?)(?=\\/>)\\/>',       // component
+            '(?={(\\$)((:)?))([^}]+)(?=})}',            // variable (static or observed value)
+            '(?={(@))([^=]+)="([^"]+)"(?=})}',          // event of html element
+            '(?=({))({)((.+?)\\((.*?)\\))(?=})}',       // call component method
         ];
 
         const regexpHtmlNode = new RegExp('(<(\\/?)(:?)([^\\/>]+)(\\/?>))', 'gm');
-        /*
+        let match;
 
+        let prevEnd = -1;
+        let lv = 0;
+        let curentEl = this._virTpl;
+        let nodeText;
+        let nodes = [];
+        while ((match = regexpHtmlNode.exec(this.template)) !== null) {
+            console.log('-----------------------------------------');
+            console.log(`prevEnd = ${prevEnd}`);
+            console.log(`Found ${match[0]} start=${match.index} end=${regexpHtmlNode.lastIndex}`);
+
+            if (prevEnd > -1 && prevEnd < match.index) {
+                console.log('text before find', this.template.substring(prevEnd, match.index));
+                nodeText = document.createTextNode(this.template.substring(prevEnd, match.index));
+                curentEl.appendChild(nodeText);
+            }
+
+            prevEnd = regexpHtmlNode.lastIndex;
+
+            let nodeName = match[4].split(' ');
+            if (match[5] == '/>' && match[3] == ':') {
+                console.log('component', '\t', nodeName[0])
+            } else if (match[5] == '/>') {
+                console.log('selfclose tag', '\t', nodeName[0])
+            } else if (match[5] == '>' && match[2] == '/') {
+                console.log('close tag', '\t', nodeName[0])
+            } else if (match[5] == '>' && match[2] == '') {
+                console.log('open tag', '\t', nodeName[0]);
+                // document.createElement("div")
+            } else {
+                console.log(match);
+            }
+            // const newDiv = document.createElement("div");
+            // let txt = document.createTextNode(this.template);
+            // this._virTpl.appendChild(txt);
+
+            // _str
+
+
+        }
+
+        console.log('-----------------------------------------');
+
+
+        /*
         '<div class="appContainer">'             '<div class="appContainer">'               ""      ""      'div class="appContainer"'              ">"
         "<div>"                                  "<div>"                                    ""      ""      "div"                                   ">"
         '<div class="msgBox">'                   '<div class="msgBox">'                     ""      ""      'div class="msgBox"'                    ">"
@@ -68,55 +112,6 @@ export default class Application {
         '<div class="box">'                      '<div class="box">'                        ""      ""      'div class="box"'                       ">"
         "</div>"                                 "</div>"                                   "/"     ""      "div"                                   ">"
         */
-        console.log('-----------------------------------------');
-
-        let match;
-        let prevEnd = -1;
-        while ((match = regexpHtmlNode.exec(this.template)) !== null) {
-            console.log(`prevEnd = ${prevEnd}`)
-            console.log(`Found ${match[0]} start=${match.index} end=${regexpHtmlNode.lastIndex}`);
-            if (prevEnd > -1 && prevEnd < match.index ) {
-                console.log('prev content = ', this.template.substring(prevEnd, match.index).trim().length , this.template.substring(prevEnd, match.index).trim())
-            }
-            prevEnd = regexpHtmlNode.lastIndex;
-
-            if (match[5] == '/>' && match[3] == ':') {
-                console.log('component')
-            } else if (match[5] == '/>') {
-                console.log('selfclose tag')
-            } else if (match[5] == '>' && match[2] == '/') {
-                console.log('close tag')
-            } else if (match[5] == '>' && match[2] == '') {
-                console.log('open tag')
-            } else {
-                console.log(match);
-            }
-
-            // let txt = document.createTextNode(this.template);
-            // this._virTpl.appendChild(txt);
-
-
-            console.log('-----------------------------------------');
-            // _str
-        }
-
-
-        // let match;
-        // let prevEl = {
-        //     "start": -1,
-        //     "end": -1
-        // };
-        // console.log('--------------------------------------');
-        // let _str = this.template;
-        // while ((match = regexpHtmlNode.exec(_str)) !== null) {
-        //     console.log(
-        //         `prevEl ${prevEl.start}, ${prevEl.end}`,
-        //     );
-        //     prevEl.start = match.index;
-        //     prevEl.end = regexpHtmlNode.lastIndex;
-        //     console.log(`start=${match.index} end=${regexpHtmlNode.lastIndex}`, match[0]);
-        //     console.log('--------------------------------------');
-        // }
 
         console.log('end', 'createComponent')
     }
