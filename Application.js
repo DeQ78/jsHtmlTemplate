@@ -4,7 +4,7 @@ export default class Application {
 
     conf_ = {
         "componentName": '',
-        "componentId": 1000000000,
+        "componentId": 0,
         "htmlElement": null,
         "parentComponent": null,
         "attributes": null
@@ -18,12 +18,17 @@ export default class Application {
     components = {};
 
     constructor(conf = {"htmlElement": null, "parentComponent": null}) {
-        console.log('start', 'constructor xxxx')
+        // console.log('start', 'constructor')
         if (this.constructor == Application) {
             throw new Error("Application is abstract classes and can't be instantiated.")
         }
 
-        // this.conf_.componentId =
+        if (conf.hasOwnProperty('componentId')) {
+            this.conf_.componentId = conf.componentId;
+        } else if (conf.parentComponent == null) {
+            this.conf_.componentId = 1000000000;
+        }
+
         this.conf_.componentName = this.constructor.name
 
         if (conf.hasOwnProperty('htmlElement')) {
@@ -39,11 +44,9 @@ export default class Application {
     }
 
     initiate() {
-        // console.log('start', 'initiate');
         this.beforeCreate();
         this.parseTemplate();
         this.afterCreate();
-        // console.log('end', 'initiate');
     }
 
     parseTemplate() {
@@ -52,56 +55,73 @@ export default class Application {
 
         const regexpHtmlNode = new RegExp('(<(\\/?)(:?)([^\\/>]+)(\\/?>))', 'gm');
         let match;
-        let prevEnd = -1;
 
+        const regExpSepAttr = new RegExp('([^\\s]+)\\s?(.*)', 'gm');
+        let matchTag;
+
+        let prevEnd = -1;
         let parentEl = null;
         let parentEls = [];
-        let curentEl = this.virDom_;
-        let nEl;
-        let nElHtmlClassId = this.conf_.componentId;
-        let nElComponentClassId = this.conf_.componentId;
+        // variables for DOM
+        let currentNode = this.virDom_;
+        let node;
+        let nodeHtmlClassId = this.conf_.componentId + 1;
+        let nodeComponentClassId = this.conf_.componentId + 1000;
+
+        // variables for read from template string
+        let elTagName;
+        let elTagAttr;
 
         while ((match = regexpHtmlNode.exec(this.template)) !== null) {
             console.log('-----------------------------------------');
             // console.log(`prevEnd = ${prevEnd}`);
             console.log(`Found ${match[0]} start=${match.index} end=${regexpHtmlNode.lastIndex}`);
-            console.log(match[4]);
+            console.log(match);
 
             if (prevEnd > -1 && prevEnd < match.index) {
-                // console.log('text before find', this.template.substring(prevEnd, match.index));
-                nEl = document.createTextNode(this.template.substring(prevEnd, match.index));
-                curentEl.appendChild(nEl);
+                // text inside html node before|after {notation}
+                node = document.createTextNode(this.template.substring(prevEnd, match.index));
+                currentNode.appendChild(node);
             }
 
             prevEnd = regexpHtmlNode.lastIndex;
 
-            let htmlAttr = match[4].split(' ');
+            console.log('found tag content = ', match[4]);
 
-            if (match[5] == '\/>' && match[3] == ':') {
-                // console.log('component', '\t', htmlAttr[0])
-                nEl = document.createElement('div');
-                nElComponentClassId += 1000;
-                htmlAttr[0] = `classId="id${nElComponentClassId}"`;
-                this.nodeAddAttributes_(nEl, htmlAttr)
-                nEl.className = 'component_' + htmlAttr[0];
-                curentEl.appendChild(nEl);
-            } else if (match[5] == '/>') {
-                // console.log('selfclose tag', '\t', htmlAttr[0]);
-                nEl = document.createElement(htmlAttr[0]);
-                curentEl.appendChild(nEl);
-            } else if (match[5] == '>' && match[2] == '/') {
-                // console.log('close tag', '\t', htmlAttr[0]);
-                curentEl = parentEls.pop();
+            if (!match[4].includes(' ')) {
+                elTagName = match[4];
+                elTagAttr = '';
+            } else {
+                regExpSepAttr.lastIndex = 0;
+                matchTag = regExpSepAttr.exec(match[4]);
+                console.log('matchTag = ', matchTag);
+
+                elTagName = matchTag[1];
+                elTagAttr = matchTag[2];
+            }
+            console.log('elTagName = ', elTagName);
+            console.log('elTagAttr =', elTagAttr);
+
+            if (match[5] == '\/>' && match[3] == ':') {         // component
+                node = document.createElement('div');
+                nodeComponentClassId += 1000;
+                // elTagName = `classId="id${nodeComponentClassId}"`;
+                // this.nodeSetAttributes_(node, htmlAttr)
+                // node.className = 'component_' + elTagName;
+                currentNode.appendChild(node);
+            } else if (match[5] == '/>') {                      // selfclose tag
+                node = document.createElement(elTagName);
+                currentNode.appendChild(node);
+            } else if (match[5] == '>' && match[2] == '/') {    // close tag
+                currentNode = parentEls.pop();
                 parentEl = null;
-            } else if (match[5] == '>' && match[2] == '') {
-                // console.log('open tag', '\t', htmlAttr[0]);
-                parentEl = curentEl;
-                parentEls.push(curentEl);
-                curentEl = document.createElement(htmlAttr[0]);
-                nElHtmlClassId += 1;
-                htmlAttr[0] = `classId="id${nElHtmlClassId}"`;
-                this.nodeAddAttributes_(curentEl, htmlAttr);
-                parentEl.appendChild(curentEl);
+            } else if (match[5] == '>' && match[2] == '') {     // open tag
+                parentEl = currentNode;
+                parentEls.push(currentNode);
+                currentNode = document.createElement(elTagName);
+                this.nodeSetAttributes_(currentNode, elTagAttr, nodeHtmlClassId);
+                nodeHtmlClassId += 1;
+                parentEl.appendChild(currentNode);
             } else {
                 console.log(match);
             }
@@ -114,12 +134,14 @@ export default class Application {
         // console.log('end', 'parseTemplate')
     }
 
-    nodeAddAttributes_(node, attrStr) {
-        console.log(node);
-        console.log(attrStr);
-    }
-
-    getComponentClassId() {
-        return 'id' + this.conf_.componentId;
+    nodeSetAttributes_(node, attrStr, classId) {
+        // const regExpSplitAttr = new RegExp('({[^}]+})|([{$@]*[^=\\s"\'}]+}?)|(\\s?=\\s?["\']{1})|(["\']\\s?)', 'gm');
+        // console.log('xxxxxxxxxxxxxxx')
+        console.log('--- nodeSetAttributes_ ---');
+        console.log('node', node);
+        console.log('attrStr = ', attrStr);
+        console.log('classId = ', classId);
+        // const math = regExpSplitAttr.exec(attrStr);
+        // math.forEach((element) => console.log(element))
     }
 }
