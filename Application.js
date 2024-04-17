@@ -1,4 +1,5 @@
 "use strict";
+
 export default class Application {
     this_ = null;
 
@@ -76,7 +77,7 @@ export default class Application {
             console.log('-----------------------------------------');
             // console.log(`prevEnd = ${prevEnd}`);
             console.log(`Found ${match[0]} start=${match.index} end=${regexpHtmlNode.lastIndex}`);
-            console.log(match);
+            // console.log(match);
 
             if (prevEnd > -1 && prevEnd < match.index) {
                 // text inside html node before|after {notation}
@@ -86,21 +87,20 @@ export default class Application {
 
             prevEnd = regexpHtmlNode.lastIndex;
 
-            console.log('found tag content = ', match[4]);
-
+            // console.log('found tag content = ', match[4]);
             if (!match[4].includes(' ')) {
                 elTagName = match[4];
                 elTagAttr = '';
             } else {
                 regExpSepAttr.lastIndex = 0;
                 matchTag = regExpSepAttr.exec(match[4]);
-                console.log('matchTag = ', matchTag);
+                // console.log('matchTag = ', matchTag);
 
                 elTagName = matchTag[1];
                 elTagAttr = matchTag[2];
             }
-            console.log('elTagName = ', elTagName);
-            console.log('elTagAttr =', elTagAttr);
+            // console.log('elTagName = ', elTagName);
+            // console.log('elTagAttr =', elTagAttr);
 
             if (match[5] == '\/>' && match[3] == ':') {         // component
                 node = document.createElement('div');
@@ -135,13 +135,19 @@ export default class Application {
     }
 
     nodeSetAttributes_(node, attrStr, classId) {
-        // const regExpSplitAttr = new RegExp('({[^}]+})|([{$@]*[^=\\s"\'}]+}?)|(\\s?=\\s?["\']{1})|(["\']\\s?)', 'gm');
-        // console.log('xxxxxxxxxxxxxxx')
-        console.log('--- nodeSetAttributes_ ---');
-        console.log('node', node);
-        console.log('attrStr = ', attrStr);
-        console.log('classId = ', classId);
-        // const math = regExpSplitAttr.exec(attrStr);
-        // math.forEach((element) => console.log(element))
+        const regExpSplitAttr = new RegExp('((?:{@[^}]+}))|([a-zA-Z0-9]+)\\s?=\\s?("|\')([^"\']+)("|\')', 'gm');
+
+        // console.log('node', node);
+        // console.log('attrStr = ', attrStr);
+        // console.log('classId = ', classId);
+        let match;
+        let nAttr;
+        while ((match = regExpSplitAttr.exec(attrStr)) !== null) {
+            if (match[2] != null && match[4] != null) {
+                nAttr = document.createAttribute(match[2].toLowerCase().trim());
+                nAttr.value = ((match[2].toLowerCase().trim() == 'class') ? 'id' + classId + ' ' : '') + match[4];
+                node.setAttributeNode(nAttr);
+            }
+        }
     }
 }
